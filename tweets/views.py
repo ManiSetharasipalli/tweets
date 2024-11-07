@@ -1,7 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-from .serializers import UserRegistrationSerializer
+from rest_framework import status, generics
+from .serializers import UserRegistrationSerializer, TweetSerializer
+from .models import Tweets
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -13,8 +14,19 @@ class UserRegistrationAPI(APIView):
             return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class TweetCreateAPI(APIView):
 
-class Users(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request):
-        return Response({'message':'This is procted API'})
+
+    def post(self, request):
+        serializer = TweetSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user = request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class TweetsListAPI(generics.ListAPIView):
+    queryset = Tweets.objects.all()
+    serializer_class = TweetSerializer
+    permission_classes = [IsAuthenticated]
+
